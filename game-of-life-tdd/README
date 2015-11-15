@@ -12,3 +12,12 @@ it initializes with B-heptomino (some more cool patterns I found here http://www
 press any key to stop.
 
 We'll see how this tdd thing works with serious projects...
+
+
+PS oh-oh, I forgot! You also need a nice-9 module (whis is pretty awesome) by Panicz Godek, the Grand Schemer;
+I attach it for completeness -- just place it in ice-9 modules (probably /usr/share/guile/2.0/ice-9/).
+
+Current version is available in his slayer project (which is awesome as well, check it out especially if you want to write games in scheme):
+https://bitbucket.org/panicz/slayer/src/ -- here (guile-modules/ice-9).
+
+
