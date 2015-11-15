@@ -1,0 +1,26 @@
+(! reverse (^ (xs) (rev1 xs ())))
+
+(! rev1 (^ (p r)
+	   (if p	       
+	       (rev1 (cdr p) (cons (car p) r))
+	       r)))
+
+(! iota (^ (n) (iot1 0 n)))
+
+(! iot1 (^ (m n) (if (= m n) () (cons m (iot1 (+ m 1) n)))))
+
+(! reduce (^ (xs e op)
+	     (if xs
+		 (op (car xs) (reduce (cdr xs) e op))
+		 e)))
+
+(! append (^ (xs ys) (reduce xs ys cons)))
+
+(! map (^ (f xs) (reduce xs () (^ (hd tl) (cons (f hd) tl)))))
+
+(! elo (append (iota 666) (reverse (iota 666))))
+
+(map iota elo)
+
+(halt)
+

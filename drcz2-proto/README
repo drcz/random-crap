@@ -1,0 +1,2 @@
+a spoiler; the only thing worth mentioning is it implements closures, but has dynamic [ie mutable] top envirionment.
+runs with guile-2.0, and compiles with gambit (just in case it doesn't, I include modified syntax-case.scm file for version 4.7.4).

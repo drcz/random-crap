@@ -1,0 +1,14 @@
+Yesterday I was on global day of coderetreat; it was awesome, no only because they had coffee and pizza!
+After coming back home I tried following the rules of tdd in scheme with geiser.
+Despite being prepared, it felt strange, but actually turned out to be useful (I did some silly mistakes while writing this, which turned out immediately).
+This is the first iteration, moslty for our great faciliator, who was curious.
+Muchas gracias Jorge!
+
+Perhaps it would be useful to write some macros for embedding the tests in the code itself;
+but for now I found it cool to split emacs into 2 columns, with test code on the left and implementation on the right.
+
+Today I wrote a small demo life-display.scm for it, which can be run with guile-2.0 (requires ncurses module);
+it initializes with B-heptomino (some more cool patterns I found here http://www.conwaylife.com/wiki/Methuselah).
+press any key to stop.
+
+We'll see how this tdd thing works with serious projects...
