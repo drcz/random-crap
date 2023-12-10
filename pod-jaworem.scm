@@ -1,6 +1,6 @@
 ;;; an ugly-but-hopefully-useful scanner-and-parser for s-expressions with
-;;; comments, roughly preserving their spatial properties (rows, columns).
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; comments, roughly preserving their spatial properties (rows & columns)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; we propose to first tokenize source string and then perform
 ;;; all the necessary parsing/counting/matching/reconstruction on
@@ -22,10 +22,10 @@
 (define (index-for #;first-element-satisfying property? #;in
                    #;or-otherwise-just-for-the-end-of xs)
   (let index ((i 0) (xs xs))
-  (match xs
-    (() i) ;; nb
-    (((? property?) . _) i)
-    ((_ . xs*) (index (1+ i) xs*)))))
+    (match xs
+      (() i) ;; nb
+      (((? property?) . _) i)
+      ((_ . xs*) (index (1+ i) xs*)))))
 
  (e.g. (index-for (is _ equal? 'q) '(a s d q w e)) ===> 3)
  (e.g. (index-for (is _ equal? 'x) '(a s d q w e)) ===> 6)
@@ -35,7 +35,7 @@
  (e.g. (repeat 'tora! 3) ===> (tora! tora! tora!))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; positions within a string we'll represent as (index col row) triplets
 
 ;;; we often compute position N chars further:
@@ -49,12 +49,14 @@
  (e.g. (position+ 3 '(0 0 0)) ===> (3 0 3))
  (e.g. (position+nl '(3 0 3)) ===> (4 1 0))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; scanners are more-or-less RTN nodes, expressed ``functionally''
 ;;; as [char] x Position -> [char] x [token] x Position
 
 (define (nl-scanner chars position)
-  (values (drop chars 1) `(((NEWLINE "\n") ,position)) (position+nl position)))
+  (values (drop chars 1)
+          `(((NEWLINE "\n") ,position))
+          (position+nl position)))
 
 (define (space-scanner chars position)
   (values (drop chars 1) '() (position+ 1 position)))
@@ -72,7 +74,8 @@
             (6 0 6))
 
 (define (atom-scanner chars position)
-  (let* ((len (index-for (is _ member? (string->list "();\"\n\t ")) chars))
+  (let* ((len (index-for (is _ member? (string->list "();\"\n\t "))
+                         chars))
          (atom (list->string (take chars len)))
          (token `((ATOM ,atom) ,position))
          (chars* (drop chars len))
@@ -84,7 +87,9 @@
          (comment (list->string (take chars len)))
          (position* (position+ len position))
          (chars** (drop-upto (1+ len) chars))
-         (position** (if (empty? chars**) position* (position+nl position*)))
+         (position** (if (empty? chars**)
+                         position*
+                         (position+nl position*)))
          (token `((ONELINE-COMMENT ,comment) ,position))
          (token* `((NEWLINE "\n") ,position*))
          (tokens** (if (empty? chars**) `(,token) `(,token ,token*))))
@@ -183,7 +188,7 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
       (44 1 33))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; which scanner to use depends on the first visible characters...
 
 (define (scanner-for chars)
@@ -201,7 +206,8 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
     ((#\) . _) (one-token-scanner ")" 'RPAR))
     ((#\. . _) (one-token-scanner "." 'DOT))
 
-    ((#\# #\\ c . _) (one-token-scanner (list->string `(#\# #\\ ,c)) 'CHAR))
+    ((#\# #\\ c . _) (one-token-scanner (list->string `(#\# #\\ ,c))
+                                        'CHAR))
     ((#\" . _) string-scanner)
 
     ((#\# #\; . _) (one-token-scanner "#;" 'COMMENT-EXPR))
@@ -212,7 +218,7 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
     ;;; TODO {moustache symbols perhaps?}
     (_ atom-scanner)))
 
-;;; then tokenization is straightforward:
+;;; then the tokenization is straightforward:
 (define (tokenized string)
   (let scan ((chars (string->list string))
              (tokens '())
@@ -239,7 +245,7 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
             ((ONELINE-COMMENT ";; boo") (37 1 32))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; given that we can obviously reconstruct the original...
 
 (define (reconstructed tokens)
@@ -258,7 +264,7 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
        ===> "(f x   \"whoa\" #|whatever|#) ;; boom")
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ...or parse [the first] expression...
 
 (define (parsed-expression tokens)
@@ -352,7 +358,7 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
             ()) ;;; no tokens left, right?
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ...or find matching parentheses and parent expression's span:
 
 (define (token-span from-token to-token #;in tokens)
@@ -368,7 +374,8 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
       (() #f) ;; mismatch!
       (((('RPAR s) pos) . tokens*) (if (= counter 1) 
                                        `((RPAR ,s) ,pos)
-                                       (counting-pars (- counter 1) tokens*)))
+                                       (counting-pars (- counter 1)
+                                                      tokens*)))
       (((('LPAR s) pos) . tokens*) (counting-pars (+ counter 1) tokens*))
       ((_ . tokens*) (counting-pars counter tokens*)))))
 
@@ -379,7 +386,8 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
       (() #f) ;; mismatch!
       (((('LPAR s) pos) . tokens*) (if (= counter 1) 
                                        `((LPAR ,s) ,pos)
-                                       (counting-pars (- counter 1) tokens*)))
+                                       (counting-pars (- counter 1)
+                                                      tokens*)))
       (((('RPAR s) pos) . tokens*) (counting-pars (+ counter 1) tokens*))
       ((_ . tokens*) (counting-pars counter tokens*)))))
 
@@ -403,17 +411,19 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
        ===> "(g y)")
 
  (e.g. (reconstructed
-        (neighbourhood '((ATOM "z") (11 0 11)) (tokenized "(f x (g y) z)")))
+        (neighbourhood '((ATOM "z") (11 0 11))
+                       (tokenized "(f x (g y) z)")))
        ===> "(f x (g y) z)")
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; finally, if i got it right, the whole point of writing this program
 ;;; was to establish size and position of given source fragment, e.g.
 ;;; a subexpression.
 
 (define (boundaries tokens)
-  (let* ((tokens (filter (lambda (((type _) _)) (not (eq? type 'NEWLINE))) tokens))
+  (let* ((tokens (filter (lambda (((type _) _)) (not (eq? type 'NEWLINE)))
+                         tokens))
          (cols (map (lambda ((type (index col row))) col) tokens))
          (rows-lft (map (lambda ((type (index col row))) row) tokens))
          (rows-rght (map (lambda (((type str) (index col row)))
@@ -442,8 +452,7 @@ new line\\\" -- not a real closing\" tbc") '(0 0 0))
              (left . 5)   (right . 10)
              (height . 1) (width . 6)))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Pod jaworem, pod zielonym...
 ;;; pod jaworem, pod zielonym hej, łorze Hanka
 ;;; siwym koniem hej, łorze Hanka
